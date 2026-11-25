@@ -1,69 +1,83 @@
+import { useMutation } from "@tanstack/react-query";
 import { useNotifications } from "../context/NotificationContext.jsx";
 import apiClient from "../services/apiClient.js";
 
-export default function NotificationItem({ notification }) {
+export default function NotificationItem({ notification, onClose }) {
   const { dispatch } = useNotifications();
 
-  async function handleClick() {
-    if (notification.isRead) return;
+  const { mutate: markRead } = useMutation({
+    mutationFn: (id) =>
+      apiClient.patch(`/api/notifications/${id}/read`),
 
-    // Update the UI immediately
-    dispatch({
-      type: "MARK_READ",
-      payload: notification.id,
-    });
+    // Optimistically mark the notification as read.
+    onMutate: (id) => {
+      dispatch({
+        type: "MARK_READ",
+        payload: id,
+      });
+    },
 
-    try {
-      // Update the notification on the server
-      await apiClient.patch(
-        `/api/notifications/${notification.id}/read`
-      );
-    } catch (error) {
-      console.error("Failed to mark as read:", error);
+    // Reload notifications if the request fails.
+    onError: (error) => {
+      console.error("Mark read failed:", error);
 
-      // Reload notifications if the request fails
-      try {
-        const res = await apiClient.get("/api/notifications");
-
-        dispatch({
-          type: "LOAD_NOTIFICATIONS",
-          payload: res.data,
+      apiClient
+        .get("/api/notifications")
+        .then((res) => {
+          dispatch({
+            type: "LOAD_NOTIFICATIONS",
+            payload: res.data,
+          });
+        })
+        .catch((err) => {
+          console.error("Notification rollback failed:", err);
         });
-      } catch (fetchError) {
-        console.error("Failed to reload notifications:", fetchError);
-      }
+    },
+  });
+
+  function handleClick() {
+    if (!notification.isRead) {
+      markRead(notification.id);
     }
+
+    onClose();
   }
 
   return (
-    <div
+    <li
       onClick={handleClick}
       style={{
-        padding: "1rem",
-        borderBottom: "1px solid #e2e8f0",
-        cursor: notification.isRead ? "default" : "pointer",
-        background: notification.isRead ? "#fff" : "#eff6ff",
+        padding: "0.85rem 1rem",
+        borderBottom: "1px solid #f3f4f6",
+        cursor: "pointer",
+        background: notification.isRead ? "#ffffff" : "#eff6ff",
+        display: "flex",
+        gap: "0.75rem",
+        alignItems: "flex-start",
       }}
     >
-      <p style={{ margin: 0 }}>
-        {notification.message}
-      </p>
-
-      <small style={{ color: "#64748b" }}>
-        {new Date(notification.createdAt).toLocaleString()}
-      </small>
-
       {!notification.isRead && (
-        <small
+        <span
           style={{
-            display: "block",
-            color: "#2563eb",
-            marginTop: "5px",
+            marginTop: "6px",
+            flexShrink: 0,
+            width: "8px",
+            height: "8px",
+            borderRadius: "50%",
+            background: "#3b82f6",
           }}
-        >
-          Unread
-        </small>
+        />
       )}
-    </div>
+
+      <div>
+        <p style={{ margin: "0 0 4px", fontSize: "0.875rem" }}>
+          {notification.message}
+        </p>
+
+        <time style={{ fontSize: "0.75rem", color: "#9ca3af" }}>
+          {new Date(notification.createdAt).toLocaleString()}
+        </time>
+      </div>
+    </li>
   );
 }
