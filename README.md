@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Threadbase — Notification UI Starter
 
 Starter repo for **LU 4.8 — In-App Notification System**.
@@ -36,3 +37,6 @@ curl -X POST http://localhost:3001/api/notifications/test \
 ```
 
 Or use Thunder Client / Postman. Badge should increment. Dropdown should open. Click a notification — badge should drop **before** the API responds.
+=======
+# threadbase-notification-ui
+>>>>>>> public/main
