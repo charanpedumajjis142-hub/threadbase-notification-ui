@@ -10,13 +10,14 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
 
+  // Close the dropdown when clicking outside.
   useEffect(() => {
     if (!open) return;
 
-    function handleClickOutside(e) {
+    function handleClickOutside(event) {
       if (
         containerRef.current &&
-        !containerRef.current.contains(e.target)
+        !containerRef.current.contains(event.target)
       ) {
         setOpen(false);
       }
@@ -32,10 +33,10 @@ export default function NotificationBell() {
   return (
     <div
       ref={containerRef}
-      style={{ position: "relative" }}
+      style={{ position: "relative", display: "inline-block" }}
     >
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => setOpen((previous) => !previous)}
         style={{
           background: "none",
           border: "none",
@@ -47,24 +48,24 @@ export default function NotificationBell() {
         aria-label={`Notifications, ${unreadCount} unread`}
       >
         🔔
-      </button>
 
-      {unreadCount > 0 && (
-        <span
-          style={{
-            position: "absolute",
-            top: "-5px",
-            right: "-8px",
-            background: "red",
-            color: "white",
-            borderRadius: "50%",
-            padding: "2px 6px",
-            fontSize: "0.7rem",
-          }}
-        >
-          {unreadCount > 99 ? "99+" : unreadCount}
-        </span>
-      )}
+        {unreadCount > 0 && (
+          <span
+            style={{
+              position: "absolute",
+              top: "-8px",
+              right: "-10px",
+              background: "red",
+              color: "white",
+              borderRadius: "50%",
+              padding: "2px 6px",
+              fontSize: "0.7rem",
+            }}
+          >
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
+        )}
+      </button>
 
       {open && (
         <NotificationDropdown
